@@ -22,9 +22,7 @@ class MainActivity : ComponentActivity() {
         Log.d("CyklZycia", "MainActivity -> onCreate")
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    ZoneSelectionScreen()
-                }
+                ZoneSelectionScreen()
             }
         }
     }
@@ -55,6 +53,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ZoneSelectionScreen() {
     val context = LocalContext.current
@@ -71,62 +70,62 @@ fun ZoneSelectionScreen() {
         mutableStateOf(listOf("America/New_York", "Asia/Tokyo", "Europe/London"))
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Wybierz strefy czasowe",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        availableZones.forEach { zone ->
-            val isChecked = zone in selectedZones
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        selectedZones = if (isChecked) {
-                            selectedZones - zone
-                        } else {
-                            selectedZones + zone
-                        }
-                    }
-                    .padding(vertical = 4.dp)
-            ) {
-                Checkbox(
-                    checked = isChecked,
-                    onCheckedChange = { checked ->
-                        selectedZones = if (checked) {
-                            selectedZones + zone
-                        } else {
-                            selectedZones - zone
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = zone, style = MaterialTheme.typography.bodyLarge)
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Wybierz strefy czasowe") })
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-
-                val intent = Intent(context, ClocksActivity::class.java).apply {
-
-                    putStringArrayListExtra(ClocksActivity.EXTRA_ZONES, ArrayList(selectedZones))
-                }
-
-                context.startActivity(intent)
-            },
-            modifier = Modifier.fillMaxWidth()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Pokaż zegary (${selectedZones.size})")
+            availableZones.forEach { zone ->
+                val isChecked = zone in selectedZones
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedZones = if (isChecked) {
+                                selectedZones - zone
+                            } else {
+                                selectedZones + zone
+                            }
+                        }
+                        .padding(vertical = 4.dp)
+                ) {
+                    Checkbox(
+                        checked = isChecked,
+                        onCheckedChange = { checked ->
+                            selectedZones = if (checked) {
+                                selectedZones + zone
+                            } else {
+                                selectedZones - zone
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = zone, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    val intent = Intent(context, ClocksActivity::class.java).apply {
+                        putStringArrayListExtra(ClocksActivity.EXTRA_ZONES, ArrayList(selectedZones))
+                    }
+                    context.startActivity(intent)
+                },
+                enabled = selectedZones.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Pokaż zegary (${selectedZones.size})")
+            }
         }
     }
 }

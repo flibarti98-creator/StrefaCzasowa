@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 class ClocksActivity : ComponentActivity() {
 
     companion object {
-        const val EXTRA_ZONES = "com.example.zegary.EXTRA_ZONES"
+        const val EXTRA_ZONES = "com.example.strefaczasowa.EXTRA_ZONES"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,9 +24,10 @@ class ClocksActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    ClocksPlaceholderScreen(zones = receivedZones)
-                }
+                ClocksPlaceholderScreen(
+                    zones = receivedZones,
+                    onBackClick = { finish() }
+                )
             }
         }
     }
@@ -57,30 +58,47 @@ class ClocksActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClocksPlaceholderScreen(zones: List<String>) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Wybrane strefy (Zadanie 1)",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        if (zones.isEmpty()) {
-            Text("Nie wybrano żadnych stref czasowych.")
-        } else {
-            zones.forEach { zone ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = zone,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+fun ClocksPlaceholderScreen(
+    zones: List<String>,
+    onBackClick: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Wybrane strefy") }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (zones.isEmpty()) {
+                Text("Nie wybrano żadnych stref czasowych.")
+            } else {
+                zones.forEach { zone ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = zone,
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            OutlinedButton(
+                onClick = onBackClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Wróć do wyboru stref")
             }
         }
     }
