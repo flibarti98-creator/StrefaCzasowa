@@ -1,6 +1,5 @@
 package com.example.strefaczasowa
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -12,9 +11,21 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import kotlinx.serialization.Serializable
+
+// 1. Definicja kluczy tras (ekranów) dla Navigation 3
+@Serializable
+data object ZoneSelectionKey : NavKey
+
+@Serializable
+data class ClocksKey(val selectedZones: List<String>) : NavKey
 
 class MainActivity : ComponentActivity() {
 
@@ -23,7 +34,7 @@ class MainActivity : ComponentActivity() {
         Log.d("CyklZycia", "MainActivity -> onCreate")
         setContent {
             MaterialTheme {
-                ZoneSelectionScreen()
+                AppNavigation()
             }
         }
     }
@@ -54,11 +65,40 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+fun AppNavigation() {
+    // 2. Stos nawigacji zapamiętywany w kompozycji (przetrwa obrót ekranu!)
+    val backStack = rememberNavBackStack(ZoneSelectionKey)
+
+    // 3. Komponent wyświetlający bieżący ekran ze stosu
+    NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
+        entryProvider = entryProvider {
+            entry<ZoneSelectionKey> {
+                ZoneSelectionScreen(
+                    onShowClocks = { chosenZones ->
+                        // Zamiast Intentu dodajemy klucz kolejnego ekranu na stos
+                        backStack.add(ClocksKey(chosenZones))
+                    }
+                )
+            }
+            entry<ClocksKey> { key ->
+                // Wykorzystujemy gotową funkcję ClocksScreen z Zadania 3!
+                ClocksScreen(
+                    zones = key.selectedZones,
+                    onBackClick = { backStack.removeLastOrNull() }
+                )
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ZoneSelectionScreen() {
-    val context = LocalContext.current
-
+fun ZoneSelectionScreen(
+    onShowClocks: (List<String>) -> Unit
+) {
     val availableZones = listOf(
         "Europe/Warsaw",
         "America/New_York",
@@ -116,12 +156,7 @@ fun ZoneSelectionScreen() {
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {
-                    val intent = Intent(context, ClocksActivity::class.java).apply {
-                        putStringArrayListExtra(ClocksActivity.EXTRA_ZONES, ArrayList(selectedZones))
-                    }
-                    context.startActivity(intent)
-                },
+                onClick = { onShowClocks(selectedZones) },
                 enabled = selectedZones.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             ) {
