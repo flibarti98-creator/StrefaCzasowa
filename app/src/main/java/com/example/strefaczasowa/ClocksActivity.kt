@@ -5,10 +5,21 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class ClocksActivity : ComponentActivity() {
 
@@ -24,7 +35,7 @@ class ClocksActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                ClocksPlaceholderScreen(
+                ClocksScreen(
                     zones = receivedZones,
                     onBackClick = { finish() }
                 )
@@ -60,15 +71,21 @@ class ClocksActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClocksPlaceholderScreen(
+fun ClocksScreen(
     zones: List<String>,
     onBackClick: () -> Unit
 ) {
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm:ss") }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault()) }
+
+    val now = Instant.now()
+    val localZone = ZoneId.systemDefault()
+    val localTime = ZonedDateTime.ofInstant(now, localZone)
+    val sameTimeText = stringResource(R.string.same_time)
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Wybrane strefy") }
-            )
+            TopAppBar(title = { Text(stringResource(R.string.world_clocks_title)) })
         }
     ) { innerPadding ->
         Column(
@@ -78,28 +95,105 @@ fun ClocksPlaceholderScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (zones.isEmpty()) {
-                Text("Nie wybrano żadnych stref czasowych.")
-            } else {
-                zones.forEach { zone ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = zone,
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.local_time_label, localZone.id),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = localTime.format(timeFormatter),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = localTime.format(dateFormatter),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            if (zones.isEmpty()) {
+                Text(stringResource(R.string.no_zones_selected))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(zones) { zoneIdString ->
+                        val targetZone = ZoneId.of(zoneIdString)
+                        val targetTime = ZonedDateTime.ofInstant(now, targetZone)
+                        val diffText = formatTimeDifference(localZone, targetZone, now, sameTimeText)
+
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = zoneIdString,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = targetTime.format(dateFormatter),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.difference_label, diffText),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Text(
+                                    text = targetTime.format(timeFormatter),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             OutlinedButton(
                 onClick = onBackClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Wróć do wyboru stref")
+                Text(stringResource(R.string.back_to_selection_btn))
             }
         }
+    }
+}
+
+fun formatTimeDifference(
+    localZone: ZoneId,
+    targetZone: ZoneId,
+    instant: Instant,
+    sameTimeText: String
+): String {
+    val localOffsetSeconds = localZone.rules.getOffset(instant).totalSeconds
+    val targetOffsetSeconds = targetZone.rules.getOffset(instant).totalSeconds
+    val diffSeconds = targetOffsetSeconds - localOffsetSeconds
+
+    if (diffSeconds == 0) return sameTimeText
+
+    val hours = diffSeconds / 3600
+    val minutes = Math.abs((diffSeconds % 3600) / 60)
+    val sign = if (diffSeconds > 0) "+" else ""
+
+    return if (minutes == 0) {
+        "$sign$hours h"
+    } else {
+        "$sign$hours h $minutes min"
     }
 }

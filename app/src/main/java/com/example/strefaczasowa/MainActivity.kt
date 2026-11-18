@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 
 class MainActivity : ComponentActivity() {
 
@@ -72,7 +73,7 @@ fun ZoneSelectionScreen() {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Wybierz strefy czasowe") })
+            TopAppBar(title = { Text(stringResource(R.string.select_zones_title)) })
         }
     ) { innerPadding ->
         Column(
@@ -124,7 +125,7 @@ fun ZoneSelectionScreen() {
                 enabled = selectedZones.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Pokaż zegary (${selectedZones.size})")
+                Text(stringResource(R.string.show_clocks_btn, selectedZones.size))
             }
         }
     }

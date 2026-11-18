@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">StrefaCzasowa</string>
+    <string name="app_name">Strefa Czasowa</string>
+    <string name="select_zones_title">Wybierz strefy czasowe</string>
+    <string name="show_clocks_btn">Pokaż zegary (%1$d)</string>
+    <string name="world_clocks_title">Zegary światowe</string>
+    <string name="local_time_label">Czas lokalny (%1$s)</string>
+    <string name="no_zones_selected">Nie wybrano żadnych stref czasowych.</string>
+    <string name="difference_label">Różnica: %1$s</string>
+    <string name="same_time">0 h (ten sam czas)</string>
+    <string name="back_to_selection_btn">Wróć do wyboru stref</string>
 </resources>

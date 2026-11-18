@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Time Zone</string>
+    <string name="select_zones_title">Select time zones</string>
+    <string name="show_clocks_btn">Show clocks (%1$d)</string>
+    <string name="world_clocks_title">World Clocks</string>
+    <string name="local_time_label">Local time (%1$s)</string>
+    <string name="no_zones_selected">No time zones selected.</string>
+    <string name="difference_label">Difference: %1$s</string>
+    <string name="same_time">0 h (same time)</string>
+    <string name="back_to_selection_btn">Back to zone selection</string>
+</resources>
