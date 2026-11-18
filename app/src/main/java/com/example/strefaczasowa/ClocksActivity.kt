@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -78,9 +81,28 @@ fun ClocksScreen(
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm:ss") }
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault()) }
 
-    val now = Instant.now()
+    // 1. Stan przechowujący aktualną chwilę w czasie (odświeżany co sekundę)
+    var currentInstant by remember { mutableStateOf(Instant.now()) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 2. Efekt powiązany z czasem życia kompozycji i stanem STARTED ekranu
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                val now = Instant.now()
+                currentInstant = now
+                Log.d("ZegarTick", "Odświeżono czas: $now")
+
+                // Wyliczenie czasu do najbliższej pełnej sekundy (eliminacja dryfu)
+                val millisInCurrentSecond = now.toEpochMilli() % 1000
+                val delayToNextSecond = 1000L - millisInCurrentSecond
+                delay(delayToNextSecond)
+            }
+        }
+    }
+
     val localZone = ZoneId.systemDefault()
-    val localTime = ZonedDateTime.ofInstant(now, localZone)
+    val localTime = ZonedDateTime.ofInstant(currentInstant, localZone)
     val sameTimeText = stringResource(R.string.same_time)
 
     Scaffold(
@@ -127,8 +149,8 @@ fun ClocksScreen(
                 ) {
                     items(zones) { zoneIdString ->
                         val targetZone = ZoneId.of(zoneIdString)
-                        val targetTime = ZonedDateTime.ofInstant(now, targetZone)
-                        val diffText = formatTimeDifference(localZone, targetZone, now, sameTimeText)
+                        val targetTime = ZonedDateTime.ofInstant(currentInstant, targetZone)
+                        val diffText = formatTimeDifference(localZone, targetZone, currentInstant, sameTimeText)
 
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Row(
